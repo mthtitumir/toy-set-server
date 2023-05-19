@@ -27,22 +27,42 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        client.connect();
         const toysCollection = client.db('toySet').collection('toys');
+        const blogCollection = client.db('toySet').collection('blogs');
 
+        // blogs data
+        app.post('/blogs', async (req, res) => {
+            const blog = req.body;
+            const result = await blogCollection.insertOne(blog);
+            res.send(result);
+        })
+        app.get('/blogs', async(req, res)=>{
+            const cursor = blogCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
         // toys data 
-        app.post('/toys', async(req, res)=>{
+        app.post('/toys', async (req, res) => {
             const toy = req.body;
             const result = await toysCollection.insertOne(toy);
             res.send(result);
         })
-        app.get('/toys', async(req, res)=>{
-            const cursor = toysCollection.find();
-            const result = await cursor.toArray();
+
+        app.get('/toys', async (req, res) => {
+            console.log(req.query);
+            let query = {};
+            if (req.query?.seller_email) {
+                query = { seller_email: req.query.seller_email }
+            }
+            if (req.query?.subcategory) {
+                query = { subcategory: req.query.subcategory }
+            }
+            const result = await toysCollection.find(query).toArray();
             res.send(result);
         })
-        app.get('/toys')
-        
+
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
