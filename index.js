@@ -30,6 +30,19 @@ async function run() {
         client.connect();
         const toysCollection = client.db('toySet').collection('toys');
         const blogCollection = client.db('toySet').collection('blogs');
+        const reviewCollection = client.db('toySet').collection('reviews');
+
+        // reviews data
+        app.post('/reviews', async (req, res)=>{
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        })
+        app.get('/reviews', async(req, res)=>{
+            const cursor = reviewCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
 
         // blogs data
         app.post('/blogs', async (req, res) => {
@@ -58,8 +71,12 @@ async function run() {
             if (req.query?.subcategory) {
                 query = { subcategory: req.query.subcategory }
             }
-            const result = await toysCollection.find(query).toArray();
+            const result = await toysCollection.find(query).limit(20).toArray();
             res.send(result);
+        })
+        app.get('/toys/:id', async(req, res)=>{
+            const result = await toysCollection.findOne({_id: new ObjectId(req.params.id)});
+            res.send(result)
         })
 
 
