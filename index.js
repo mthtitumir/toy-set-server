@@ -72,6 +72,7 @@ async function run() {
             if (req.query?.subcategory) {
                 query = { subcategory: req.query.subcategory }
             }
+            // sort query 
             if (req.query?.sort === 'ascending') {
                 sort.price = 1;
             }
