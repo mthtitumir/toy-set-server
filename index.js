@@ -27,18 +27,18 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        client.connect();
+        // client.connect();
         const toysCollection = client.db('toySet').collection('toys');
         const blogCollection = client.db('toySet').collection('blogs');
         const reviewCollection = client.db('toySet').collection('reviews');
 
         // reviews data
-        app.post('/reviews', async (req, res)=>{
+        app.post('/reviews', async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
             res.send(result);
         })
-        app.get('/reviews', async(req, res)=>{
+        app.get('/reviews', async (req, res) => {
             const cursor = reviewCollection.find();
             const result = await cursor.toArray();
             res.send(result);
@@ -50,7 +50,7 @@ async function run() {
             const result = await blogCollection.insertOne(blog);
             res.send(result);
         })
-        app.get('/blogs', async(req, res)=>{
+        app.get('/blogs', async (req, res) => {
             const cursor = blogCollection.find();
             const result = await cursor.toArray();
             res.send(result);
@@ -63,20 +63,62 @@ async function run() {
         })
 
         app.get('/toys', async (req, res) => {
-            console.log(req.query);
+            // console.log(req.query);
             let query = {};
+            let sort = {};
             if (req.query?.seller_email) {
                 query = { seller_email: req.query.seller_email }
             }
             if (req.query?.subcategory) {
                 query = { subcategory: req.query.subcategory }
             }
-            const result = await toysCollection.find(query).limit(20).toArray();
+            if (req.query?.sort === 'ascending') {
+                sort.price = 1;
+            }
+            if (req.query?.sort === 'descending') {
+                sort.price = -1;
+            }
+            console.log(sort);
+            const result = await toysCollection.find(query).sort(sort).limit(20).toArray();
             res.send(result);
         })
-        app.get('/toys/:id', async(req, res)=>{
-            const result = await toysCollection.findOne({_id: new ObjectId(req.params.id)});
+        app.get('/toys/:id', async (req, res) => {
+            const result = await toysCollection.findOne({ _id: new ObjectId(req.params.id) });
             res.send(result)
+        })
+        app.delete('/toys/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await toysCollection.deleteOne(query);
+            res.send(result);
+        })
+        app.put('/toys/update-toy/:id', async (req, res) => {
+            const id = req.params.id;
+            const body = req.body;
+            const option = {
+                upsert: true,
+            }
+            const query = { _id: new ObjectId(id) };
+            const toyData = {
+                $set: {
+                    id: body.id,
+                    img: body.img,
+                    name: body.name,
+                    seller: body.seller,
+                    seller_email: body.seller_email,
+                    subcategory: body.subcategory,
+                    price: body.price,
+                    rating: body.rating,
+                    quantity: body.quantity,
+                    description: body.description,
+                }
+            }
+            const result = await toysCollection.updateOne(
+                query,
+                toyData,
+                option
+            )
+            res.send(result);
         })
 
 
